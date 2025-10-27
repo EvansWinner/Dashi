@@ -1,4 +1,4 @@
-q;;; dashi.el --- quasi-dashboard for Emacs   -*- lexical-binding: t; -*-
+;;; dashi.el --- Dashboards for Emacs   -*- lexical-binding: t; -*-
 ;; Copyright (C) 2025  Evans Winner
 
 ;; Author: Evans Winner <evans.winner@gmail.com>
@@ -91,6 +91,9 @@ q;;; dashi.el --- quasi-dashboard for Emacs   -*- lexical-binding: t; -*-
 (defun dashi/util/underline (str)
   (propertize str 'face '(:underline t)))
 
+(defmacro dashi/util/box (str)
+  (propertize str 'face '(:box t)))
+
 (defmacro dashi/util/with-newline (&rest strs)
   `(concat ,@strs "\n"))
 
@@ -107,12 +110,12 @@ q;;; dashi.el --- quasi-dashboard for Emacs   -*- lexical-binding: t; -*-
 
 ;; box -- simplest one. Also the only one atm
 (defun dashi/helper/box-prefix (string)
-  (replace-regexp-in-string "^" " | " string))
+  (replace-regexp-in-string "^" " ┃ " string))
 
 (defun dashi/decor/box (string)
-  (concat "  ,----------\n"
+  (concat " ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 	  (dashi/helper/box-prefix string)
-	  "\n  `----------\n"))
+	  "\n ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 
 
 ;; "Widgets" -- defuns for each group of data. Each function should
@@ -122,19 +125,20 @@ q;;; dashi.el --- quasi-dashboard for Emacs   -*- lexical-binding: t; -*-
 
 (defun dashi/widget/emacs ()
   (concat (dashi/util/with-newline 
-	   (dashi/util/bold (emacs-uptime)) "  ⇦  "
-	   "Emacs uptime")
-	  "Kill-ring items ... "
+	   "Emacs uptime     ⇨  "
+	   (dashi/util/bold (emacs-uptime "%dd %hh %mm %ss")))
+	  "Kill-ring items  ⇨  "
 	  (dashi/util/bold (dashi/item/kill-ring-length))))
 (defun dashi/widget/buffers ()
-  (concat "Non-hidden buffers ... "
+  (concat "Non-hidden buffers ⇨ "
 	  (dashi/util/bold (dashi/items/legit-buffer-count))))
 
 (defun dashi/widget/time ()
-  (concat "Time/date ... " (dashi/util/bold (current-time-string))))
+  (concat "Time/date ⇨ "
+	  (dashi/util/bold (format-time-string "%Y-%m-%d %H:%M:%S" (current-time)))))
 
 (defun dashi/widget/directories ()
-  (concat "Current directory ... " (dashi/util/bold(dashi/item/pwd))))
+  (concat "Current directory ⇨ " (dashi/util/bold(dashi/item/pwd))))
  
 
 ;; "Items" -- defuns for each datum -- widgets can call any number of
@@ -177,26 +181,18 @@ q;;; dashi.el --- quasi-dashboard for Emacs   -*- lexical-binding: t; -*-
       (let ((inhibit-read-only t))
 	(erase-buffer)
 	(setq fill-column (window-total-width))
- 	(forward-line 1)
+	(newline)
 	(dashi/util/with-newline (insert dashi/title))
 	(newline)
 	(beginning-of-buffer)
 	(center-line 2)
-	(let* ((nlines (window-body-height))
-	       (ncols (window-body-width))
-;	       (blank-line (make-string ncols ?\s)))
-	       (blank-line (make-string ncols ?\.)))
-	  (dotimes (_ (- nlines 3))
-	    (insert blank-line)
-	    (newline)
-	    (forward-line 1)))
-	(beginning-of-buffer)
-	(forward-line 3)
 	(dolist (w dashi/widget-list)
-	  (dashi/util/overwrite (dashi/make-widget w)))
+	  (insert (dashi/make-widget w)))
 	(message (dashi/util/instructions))
+	(center-line)
 	(pop-to-buffer-same-window buf)
 	(dashi-mode)
+	(setq line-spacing 0)
 	(setq buffer-read-only t)))))
 
 (provide 'dashi)
