@@ -33,29 +33,55 @@
 ;; items as you want.
 
 ;;; Code:
+;; Sections todo: files, memory, timers, global modes,
+;; functions/symbols
 
 ;;; Vars
+(defvar dashi/lambda (propertize "λ" 'face '(:weight bold)))
 
-;; Each is a list (function title decorator) where function is a
-;; function that returns an unadorned string with the datum you want
-;; shown, title is the title of the widget, and decorator is a
-;; function that decorates the widget in some way (e.g., a boxquote
-;; function or similar). decorator may be nil for no decorator, title
-;; may be nil for no title.  Example: (time-of-day "Current Time: "
-;; dashi/box)
 
-;; Sections todo: files, memory, features, load-path, processes,
-;; timers, global modes, functions/symbols
+;;; Custom
+(defgroup dashi nil
+  "Customization options for the Dashi Emacs dashboard system."
+  :group 'tools)
 
-(defvar dashi/decorator-function 'dashi/decor/box)
+(defcustom dashi/default-render-widget-function #'dashi/render/unicode-box
+  "The default function used to render a Dashi widget."
+  :group 'dashi
+  :type '(function :tag "Widget Rendering Function")
+  :safe #'symbolp)
 
-(defvar dashi/widget-list 
-  '(
-    (dashi/widget/emacs "Emacs" "💻")
-    (dashi/widget/buffers "Buffers" "📃")
-    (dashi/widget/time "Time" "🕑")
-    (dashi/widget/directories "Directories" "🔢")
-    ))
+(defcustom dashi/default-render-item-function #'dashi/render/item-basic
+  "The default function used to render a Dashi 'datum' or atomic item within a widget."
+  :group 'dashi
+  :type '(function :tag "Item Rendering Function")
+  :safe #'symbolp)
+
+(defcustom dashi/widget-list
+  ;; Default value
+  `(
+    (dashi/widget/emacs "Emacs" "💻" nil)
+    (dashi/widget/buffers "Buffers" "📃" nil)
+    (dashi/widget/time "Time" "🕑" nil)
+    (dashi/widget/directories "Directories" "🔢" nil)
+    (dashi/widget/processes "Processes" ,dashi/lambda nil)
+    )
+  "List of Dashi dashboard widgets to display.
+Each element is a list of four items:
+1. The widget function symbol (e.g., `dashi/widget/time`).
+2. A display label string (e.g., \"Time\").
+3. An icon string or character (e.g., \"🕑\").
+4. An optional action function symbol or nil (e.g., `nil` or `dashi/lambda`)."
+  :group 'dashi
+  :type '(repeat 
+          (list 
+           (function :tag "Widget Function")
+           (string :tag "Display Label")
+           (string :tag "Icon Character/String")
+           (choice :tag "Widget Rendering Function (nil for default)"
+                   (const :tag "None" nil)
+                   (function))))
+  )
 
 (defvar dashi/buffer-name "*dashi*")
 
@@ -64,17 +90,15 @@
 	  (propertize "Dashi Emacs Dashboard" 'face '(:weight bold :underline t))
 	  " 📊\n[r]efresh, [b]ury, or [q]uit"))
 
-;; Customize
 
-;; Major mode
+;;; Major mode
 (defvar dashi-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "b") #'quit-window)
-    (define-key map (kbd "q") #'(lambda ()
-				  (interactive)
-				  (set-buffer-modified-p nil)
-				  (kill-buffer)))
+    (define-key map (kbd "q") #'dashi/util/quit)
     (define-key map (kbd "r") #'dashi/util/refresh)
+    (define-key map (kbd "?") #'dashi/util/instructions)
+    (define-key map (kbd "h") #'dashi/util/instructions)
     map)
   "Keymap for `dashi-mode`.")
 
@@ -96,48 +120,80 @@
 (defmacro dashi/util/with-newline (&rest strs)
   `(concat ,@strs "\n"))
 
-
 (defun dashi/util/refresh ()
   (interactive)
   (kill-buffer dashi/buffer-name)
   (dashi))
 
+(defun dashi/util/quit ()
+  (interactive)
+  (set-buffer-modified-p nil)
+  (kill-buffer))
+
 (defun dashi/util/instructions ()
-  (concat "Dashi Emacs Dashboard:   [r]efresh, [b]ury, or [q]uit"))
+  (interactive)
+  (message
+   (concat
+    "Dashi Emacs Dashboard:   [r]efresh, [b]ury, or [q]uit")))
 
-;;; Rendering back-ends
-;; box -- simplest one. Also the only one atm
-(defun dashi/helper/box-prefix (string)
-  (replace-regexp-in-string "^" " ┃ " string))
 
-(defun dashi/decor/box (string)
-  (concat " ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-	  (dashi/helper/box-prefix string)
-	  "\n ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+;;; Rendering back-ends for widgets
+(defun dashi/helper/box-prefix (string prefix)
+  (replace-regexp-in-string "^" prefix string))
+
+;; ascii-box -- simplest one, should work on TTY
+(defun dashi/render/ascii-box (string)
+  (concat " .------------------------------\n"
+	  (dashi/helper/box-prefix string " | ")
+	  "\n `------------------------------\n"))
+
+;; unicode-box -- the default atm
+(defun dashi/render/unicode-box (string)
+  (concat " ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+	  (dashi/helper/box-prefix string " ┃ ")
+	  "\n ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+
+
+;;; Rendering back-ends for items 
 
 
 ;; "Widgets" -- defuns for each group of data. Each function should
-;; output the text for a data item to be included in the
-;; dashboard. Don't bother ending with a newline, one will be added
-;; for you.
+;; output the text for an enclosing structure into which one or more
+;; "items" will be put.  Don't bother ending with a newline, one will
+;; be added for you.
 
 (defun dashi/widget/emacs ()
   (concat (dashi/util/with-newline 
-	   "Emacs uptime     ⇨  "
+	   "Emacs uptime     ⇨ "
 	   (dashi/util/bold (emacs-uptime "%dd %hh %mm %ss")))
-	  "Kill-ring items  ⇨  "
+	  "Features         ⇨ "
+	  (dashi/util/with-newline (dashi/util/bold (dashi/item/features)))
+	  "Global modes     ⇨ "
+	  (dashi/util/with-newline (dashi/util/bold (dashi/item/global-modes-cnt)))
+	  "Kill-ring items  ⇨ "
 	  (dashi/util/bold (dashi/item/kill-ring-length))))
+
 (defun dashi/widget/buffers ()
-  (concat "Non-hidden buffers ⇨ "
-	  (dashi/util/bold (dashi/items/legit-buffer-count))))
+  (concat
+   "All            ⇨ "
+   (dashi/util/with-newline (dashi/item/all-buffer-count))
+   "Non-hidden     ⇨ "
+   (dashi/util/with-newline (dashi/util/bold (dashi/item/legit-buffer-count)))
+   "Visiting files ⇨ "
+   (dashi/util/bold (dashi/item/file-buffer-count))
+   ))
 
 (defun dashi/widget/time ()
   (concat "Time/date ⇨ "
-	  (dashi/util/bold (format-time-string "%Y-%m-%d %H:%M:%S" (current-time)))))
+	  (dashi/util/bold
+	   (format-time-string "%Y-%m-%d %H:%M:%S %Z" (current-time)))))
 
 (defun dashi/widget/directories ()
   (concat "Current directory ⇨ " (dashi/util/bold(dashi/item/pwd))))
- 
+
+(defun dashi/widget/processes ()
+  (concat "Emacs sub-processes ⇨ " (dashi/util/bold (dashi/item/processes))))
+
 
 ;; "Items" -- defuns for each datum -- widgets can call any number of
 ;; these
@@ -146,21 +202,37 @@
 (defun dashi/item/kill-ring-length ()
   (int-to-string (length kill-ring)))
 (defun dashi/helper/legit-buffer-count ()
-  (length (remq nil (mapcar
-		     (lambda (buffer-name)
-		       (if (not (string-match "^ " buffer-name)) buffer-name))
-		     (mapcar 'buffer-name (buffer-list))))))
-(defun dashi/items/legit-buffer-count ()
-  (int-to-string (dashi/helper/legit-buffer-count)))
+  (int-to-string
+   (length (remq nil (mapcar
+		      (lambda (buffer-name)
+			(if (not (string-match "^ " buffer-name)) buffer-name))
+		      (mapcar 'buffer-name (buffer-list)))))))
+(defun dashi/item/legit-buffer-count ()
+  (dashi/helper/legit-buffer-count))
 
+(defun dashi/item/all-buffer-count ()
+  (int-to-string (length (buffer-list))))
+(defun dashi/item/file-buffer-count ()
+  (int-to-string
+   (length
+    (remove nil(mapcar #'buffer-file-name (buffer-list))))))
+
+(defun dashi/item/global-modes-cnt ()
+  (int-to-string (length global-minor-modes)))
+
+(defun dashi/item/processes ()
+  (int-to-string (length (process-list))))
+
+(defun dashi/item/features ()
+  (int-to-string (length features)))
 
 ;; Main
-(defun dashi/decorate-widget (fn widget)
+(defun dashi/render-widget (fn widget)
   (funcall fn widget))
  
 (defun dashi/make-widget (widget)
-  (concat (dashi/decorate-widget
-	   dashi/decorator-function
+  (concat (dashi/render-widget
+	   (or (nth 3 widget) dashi/default-render-widget-function)
 	   (concat (nth 2 widget) " "
 		   (dashi/util/underline (nth 1 widget))
 		   "\n"
@@ -188,9 +260,10 @@
 	  (insert (dashi/make-widget w)))
 	(center-line)
 	(pop-to-buffer-same-window buf)
+	(goto-char (point-min))
 	(dashi-mode)
 	(setq line-spacing 0)
-	(message (dashi/util/instructions))
+	(dashi/util/instructions)
 	(setq buffer-read-only t)))))
 
 (provide 'dashi)
