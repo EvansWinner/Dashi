@@ -44,9 +44,8 @@
 ;; may be nil for no title.  Example: (time-of-day "Current Time: "
 ;; dashi/box)
 
-;; Sections: Emacs, buffers, time/date, files, folders, memory,
-;; features, load-path, processes, timers, global modes,
-;; functions/symbols
+;; Sections todo: files, memory, features, load-path, processes,
+;; timers, global modes, functions/symbols
 
 (defvar dashi/decorator-function 'dashi/decor/box)
 
@@ -58,29 +57,29 @@
     (dashi/widget/directories "Directories" "🔢")
     ))
 
-(defvar dashi/buffer-name "*dashi*"
+(defvar dashi/buffer-name "*dashi*")
 
-
-
-
-)
 (defvar dashi/title
   (concat "📊 "
 	  (propertize "Dashi Emacs Dashboard" 'face '(:weight bold :underline t))
-	  " 📊\n[r]efresh or [q]uit"))
+	  " 📊\n[r]efresh, [b]ury, or [q]uit"))
 
 ;; Customize
 
 ;; Major mode
 (defvar dashi-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") #'quit-window)
+    (define-key map (kbd "b") #'quit-window)
+    (define-key map (kbd "q") #'(lambda ()
+				  (interactive)
+				  (set-buffer-modified-p nil)
+				  (kill-buffer)))
     (define-key map (kbd "r") #'dashi/util/refresh)
     map)
   "Keymap for `dashi-mode`.")
 
 (define-derived-mode dashi-mode special-mode "Dashi"
-  "Major mode for dashboards."
+  "Major mode for Dashi dashboards."
   (read-only-mode 1))
 
 
@@ -104,18 +103,17 @@
   (dashi))
 
 (defun dashi/util/instructions ()
-  (concat "Dashi Emacs Dashboard:   [r]efresh or [q]uit"))
+  (concat "Dashi Emacs Dashboard:   [r]efresh, [b]ury, or [q]uit"))
 
 ;;; Rendering back-ends
-
 ;; box -- simplest one. Also the only one atm
 (defun dashi/helper/box-prefix (string)
   (replace-regexp-in-string "^" " ┃ " string))
 
 (defun dashi/decor/box (string)
-  (concat " ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+  (concat " ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 	  (dashi/helper/box-prefix string)
-	  "\n ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+	  "\n ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 
 
 ;; "Widgets" -- defuns for each group of data. Each function should
@@ -144,7 +142,7 @@
 ;; "Items" -- defuns for each datum -- widgets can call any number of
 ;; these
 (defun dashi/item/pwd ()
-  default-directory)
+  (abbreviate-file-name default-directory))
 (defun dashi/item/kill-ring-length ()
   (int-to-string (length kill-ring)))
 (defun dashi/helper/legit-buffer-count ()
@@ -154,7 +152,6 @@
 		     (mapcar 'buffer-name (buffer-list))))))
 (defun dashi/items/legit-buffer-count ()
   (int-to-string (dashi/helper/legit-buffer-count)))
-
 
 
 ;; Main
@@ -185,14 +182,15 @@
 	(dashi/util/with-newline (insert dashi/title))
 	(newline)
 	(beginning-of-buffer)
-	(center-line 2)
+	(center-line 3)
+	(forward-line 1)
 	(dolist (w dashi/widget-list)
 	  (insert (dashi/make-widget w)))
-	(message (dashi/util/instructions))
 	(center-line)
 	(pop-to-buffer-same-window buf)
 	(dashi-mode)
 	(setq line-spacing 0)
+	(message (dashi/util/instructions))
 	(setq buffer-read-only t)))))
 
 (provide 'dashi)
