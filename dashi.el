@@ -155,7 +155,10 @@ Each element is a list of four items:
 
 
 ;;; Rendering back-ends for items 
+;; An item rendering function takes a function which will return a
+;; string (the actual data generator) then a string title.
 
+(defun dashi/render
 
 ;; "Widgets" -- defuns for each group of data. Each function should
 ;; output the text for an enclosing structure into which one or more
@@ -259,10 +262,18 @@ Each element is a list of four items:
 	(dolist (w dashi/widget-list)
 	  (insert (dashi/make-widget w)))
 	(center-line)
-	(pop-to-buffer-same-window buf)
-	(goto-char (point-min))
+	(newline)
+	(goto-char (point-max))
+	(insert-image
+	 (create-image
+	  (concat (file-name-directory
+		   (cdr (find-function-library 'dashi))) "images/dashi.jpg")
+	  nil nil :scale 0.2))
+	(center-line)
 	(dashi-mode)
 	(setq line-spacing 0)
+	(pop-to-buffer-same-window buf)
+	(goto-char (point-min))
 	(dashi/util/instructions)
 	(setq buffer-read-only t)))))
 
