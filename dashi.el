@@ -31,7 +31,7 @@
 ;; Items are the actual functions that return the interesting
 ;; information.  Widgets should call items.  A widget can call as many
 ;; items as you want.
-
+ 
 ;;; Code:
 ;; Sections todo: files, timers, functions/symbols
 
@@ -43,7 +43,6 @@
   (concat "📊 "
 	  (propertize "Dashi Emacs Dashboard" 'face '(:weight bold :underline t))
 	  " 📊\n"))
-
 
 ;;; Custom
 (defgroup dashi nil
@@ -64,7 +63,7 @@ Probably spaces.  Could be something else if you want."
 
 (defcustom dashi/default-render-widget-function #'dashi/render/unicode-box
   "The default function used to render a Dashi widget."
-  :group 'dashi
+   :group 'dashi
   :type '(function :tag "Widget Rendering Function")
   :safe #'symbolp)
 

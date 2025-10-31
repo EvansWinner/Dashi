@@ -1,1 +1,4 @@
-dashi.el --- Dashboards for Emacs
+dashi.el --- Data Dashboards for Emacs
+
+Ok, now that you've stopped laughing, here's what it is:
+
