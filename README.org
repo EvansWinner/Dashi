@@ -26,16 +26,18 @@ The other four are the ones you want to mess with:
  
 Don't be put off by the highfalutin terms. These are really just functions that return strings or take lists of those functions and decorate those strings with other strings. It's intended to be as simple as possible.
  
-** To-dos
-
-*** TODO Fill out this README. How to write new rendering engines for cards and for items, and how to write new items and new cards.
-*** TODO Abstract and simplify the method for doing new data items, similar to
-  how cards are done.
+** TODOs
+*** TODO Fill out this README
+**** TODO How to modify existing cards
+**** TODO How to do new items
+**** TODO How to do new cards
+**** TODO How to do new item rendering routines
+**** TODO How to do new card rendering routines
+*** TODO Abstract and simplify method for doing new data items
 *** TODO Refactor into separate files for --
 **** TODO Rendering engines for items
 **** TODO Rendering engines for cards
 **** TODO Existing cards and items
 **** TODO The major mode
-*** TODO Write some more example cards, including one using a REST request and
-  maybe one doing web scraping of some kind
+*** TODO Write more example cards (REST?)
 *** MAYBE Do a rendering "engine" using SVG boxes
