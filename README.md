@@ -1,7 +1,11 @@
 # Dashi
 ## Data Dashboards for Emacs
 
+## Screenshot
+
 <img src="images/dashiScreenshot.png" width="100%"/>
+
+## Overview
 
 It turns out that there is already an [Emacs
 Dashboard](https://github.com/emacs-dashboard/emacs-dashboard) on Melpa, which
