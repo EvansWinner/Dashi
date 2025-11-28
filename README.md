@@ -12,14 +12,30 @@ Dashboard](https://github.com/emacs-dashboard/emacs-dashboard) on Melpa, which
 is probably much more powerful than this. Dashi's point is to be simpler, less
 opinionated, and to be easy to hack or to make your own cards and data items.
 
+There are currently 7 types of things here. The first three are basic things:
+ 1. The core Dashi program
+ 2. The customization group and items
+ 3. The major mode
 
+The other four are the ones you want to mess with:
+ 1. "Cards": This is a visual container for whatever data items you want to show.
+ 2. "Items": This is the actual data you want to display. This is really just
+    any function that returns a string to show.
+ 3. The "rendering engine" for cards -- this defines how your cards will be displayed.
+ 4. The "rendering engine" for the items -- this defines how your data items will be displayed.
+ 
+Don't be put off by the highfalutin terms. These are really just functions that return strings or take lists of those functions and decorate those strings with other strings. It's intended to be as simple as possible.
+ 
 ## To-dos
 
-- **TODO** Fill out this README
+- **TODO** Fill out this README. How to write new rendering engines for cards and for items, and how to write new items and new cards.
 - **TODO** Abstract and simplify the method for doing new data items, similar to
   how cards are done.
-- **TODO** Pull out the rendering engines for items into a separate file
-- **TODO** Pull out the rendering engines for cards into a separate file
+- **TODO** Refactor into separate files for --
+  - **TODO** Rendering engines for items
+  - **TODO** Rendering engines for cards
+  - **TODO** Existing cards and items
+  - **TODO** The major mode
 - **TODO** Write some more example cards, including one using a REST request and
   maybe one doing web scraping of some kind
 - **MAYBE** Do a rendering "engine" using SVG boxes
