@@ -202,7 +202,7 @@ Each element is a list of four items:
 	  "Subprocesses       ⇨  " (dashi/util/bold (dashi/item/processes))))
 
 (defun dashi/widget/system ()
-  (concat "Mnemory used        ⇨  "
+  (concat "Memory used        ⇨  "
 	   (dashi/util/bold (dashi/item/system-memory))))
 
 (defun dashi/widget/buffers ()
