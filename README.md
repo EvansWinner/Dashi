@@ -1,4 +1,5 @@
-dashi.el --- Data Dashboards for Emacs
+# dashi.el
+## Data Dashboards for Emacs
 
 <img src="images/dashiScreenshot.png" width="100%"/>
 
