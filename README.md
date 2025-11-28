@@ -9,7 +9,6 @@
 
 It turns out that there is already an [Emacs
 Dashboard](https://github.com/emacs-dashboard/emacs-dashboard) on Melpa, which
-is probably much more powerful than this. Dashi's point is to be less
-opinionated and to make it easy to hack it or make your own cards and data
-items.
+is probably much more powerful than this. Dashi's point is to be simpler, less
+opinionated, and to be easy to hack or to make your own cards and data items.
 
